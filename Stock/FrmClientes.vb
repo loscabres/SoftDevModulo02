@@ -1,60 +1,11 @@
-﻿Public Class FrmClientes
+﻿Imports MySql.Data.MySqlClient
+Public Class FrmClientes
 
     Private Sub BtnSalir_Click(sender As Object, e As EventArgs) Handles BtnSalir.Click
         Dispose()
     End Sub
 
     Private Sub BtnNuevo_Click(sender As Object, e As EventArgs) Handles BtnNuevo.Click
-        Limpiar()
-    End Sub
-
-    Private Sub FrmClientes_Load(sender As Object, e As EventArgs) Handles MyBase.Load
-        Try
-            Limpiar()
-            GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
-
-        Catch ex As Exception
-            MessageBox.Show("Ocurrio este error = " & ex.Message)
-        End Try
-    End Sub
-
-    Private Sub BtnGrabar_Click(sender As Object, e As EventArgs) Handles BtnGrabar.Click
-        Try
-            Dim NuevoCliente As New Cliente
-            Dim NuevoId_Clientes As Integer
-
-            NuevoCliente.Nombre = TxtNombre.Text
-            NuevoCliente.Direccion = TxtDireccion.Text
-            NuevoCliente.Telefono = TxtTelefono.Text
-            NuevoCliente.Cedula = TxtCedula.Text
-            NuevoCliente.Ruc = TxtRuc.Text
-            NuevoCliente.Nacimiento = DtpNacimiento.Value
-            NuevoCliente.Email = TxtEmail.Text
-            NuevoCliente.CantidadHijos = TxtCantidadHijos.Value
-            NuevoCliente.Salario = TxtSalario.Value
-            NuevoCliente.Foto = PctFoto.Image
-            NuevoCliente.Genero = RdbFemenino.Checked
-
-            If TxtCodigo.Text = 0 Then
-                NuevoId_Clientes = Cliente.GrabarCliente(NuevoCliente)
-            Else
-                NuevoCliente.Id_Clientes = TxtCodigo.Text
-                Cliente.EditarCliente(NuevoCliente)
-            End If
-
-            Limpiar()
-            GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
-
-            MessageBox.Show("Operacion realizada")
-        Catch ex As Exception
-            MessageBox.Show("Ocurrio este error = " & ex.Message)
-        End Try
-
-    End Sub
-
-#Region "Limpiar"
-
-    Private Sub Limpiar()
         TxtCodigo.Text = 0
         TxtNombre.Clear()
         TxtDireccion.Clear()
@@ -71,9 +22,20 @@
         TxtNombre.Focus()
     End Sub
 
-#End Region
+    Private Sub BtnEliminarFoto_Click(sender As Object, e As EventArgs) Handles BtnEliminarFoto.Click
+        PctFoto.Image = Nothing
+    End Sub
 
-#Region "Enter move next control"
+    Private Sub BtnBuscarFoto_Click(sender As Object, e As EventArgs) Handles BtnBuscarFoto.Click
+        Dim AbrirArchivo As New OpenFileDialog
+        AbrirArchivo.Filter = "Imagenes jpg|*.jpg"
+        AbrirArchivo.ShowDialog()
+
+        If AbrirArchivo.FileName <> "" Then
+            PctFoto.Image = Image.FromFile(AbrirArchivo.FileName)
+        End If
+
+    End Sub
 
     Private Sub TxtNombre_KeyDown(sender As Object, e As KeyEventArgs) Handles TxtNombre.KeyDown
         If e.KeyCode = Keys.Enter Then
@@ -135,89 +97,89 @@
         End If
     End Sub
 
-#End Region
+	Private Sub FrmClientes_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+		Try
+			GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
+		Catch ex As Exception
+			MessageBox.Show("Ocurrio este error: " & ex.Message)
+		End Try
+	End Sub
 
-#Region "Foto"
+	Private Sub BtnGrabar_Click(sender As Object, e As EventArgs) Handles BtnGrabar.Click
+		Try
+			Dim NuevoCliente As New Cliente
+			Dim Id_Cliente As Integer
 
-    Private Sub BtnEliminarFoto_Click(sender As Object, e As EventArgs) Handles BtnEliminarFoto.Click
-        PctFoto.Image = Nothing
-    End Sub
+			NuevoCliente.Id_Clientes = TxtCodigo.Text
 
-    Private Sub BtnBuscarFoto_Click(sender As Object, e As EventArgs) Handles BtnBuscarFoto.Click
-        Dim AbrirArchivo As New OpenFileDialog
-        AbrirArchivo.Filter = "Imagenes jpg|*.jpg"
-        AbrirArchivo.ShowDialog()
+			NuevoCliente.Nombre = TxtNombre.Text.Trim
+			NuevoCliente.Direccion = TxtDireccion.Text.Trim
+			NuevoCliente.Telefono = TxtTelefono.Text.Trim
+			NuevoCliente.Cedula = TxtCedula.Text.Trim
+			NuevoCliente.Ruc = TxtRuc.Text.Trim
+			NuevoCliente.Nacimiento = DtpNacimiento.Value
+			NuevoCliente.Email = TxtEmail.Text.Trim
+			NuevoCliente.CantidadHijos = TxtCantidadHijos.Value
+			NuevoCliente.Salario = TxtSalario.Value
+			NuevoCliente.Foto = PctFoto.Image
+			NuevoCliente.Genero = RdbFemenino.Checked
 
-        If AbrirArchivo.FileName <> "" Then
-            PctFoto.Image = Image.FromFile(AbrirArchivo.FileName)
-        Else
-            PctFoto.Image = Nothing
-        End If
-    End Sub
+			If TxtCodigo.Text = 0 Then
+				Id_Cliente = Cliente.InsertarClientes(NuevoCliente)
+			Else
+				Cliente.EditarClientes(NuevoCliente)
+			End If
 
-    Private Sub GrdClientes_SelectionChanged(sender As Object, e As EventArgs) Handles GrdClientes.SelectionChanged
+			BtnNuevo_Click(Nothing, Nothing)
+			GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
 
-        If GrdClientes.SelectedRows.Count > 0 Then
-            Dim Id_Clientes As Integer = GrdClientes.SelectedRows(0).Cells(0).Value
+			MessageBox.Show("Operacion realizada")
+		Catch ex As Exception
+			MessageBox.Show("Ocurrio este error: " & ex.Message)
+		End Try
+	End Sub
 
-            Dim ClienteElegido As Cliente
+	Private Sub GrdClientes_SelectionChanged(sender As Object, e As EventArgs) Handles GrdClientes.SelectionChanged
+		If GrdClientes.SelectedRows.Count > 0 Then
+			Dim Id_Clientes As Integer = GrdClientes.SelectedRows(0).Cells(0).Value
 
-            ClienteElegido = Cliente.RecuperarUnCliente(Id_Clientes)
+			Dim ClienteElegido As Cliente
 
-            TxtCodigo.Text = ClienteElegido.Id_Clientes
-            TxtNombre.Text = ClienteElegido.Nombre
-            TxtDireccion.Text = ClienteElegido.Direccion
-            TxtTelefono.Text = ClienteElegido.Telefono
-            TxtCedula.Text = ClienteElegido.Cedula
-            TxtRuc.Text = ClienteElegido.Ruc
-            DtpNacimiento.Value = ClienteElegido.Nacimiento
-            TxtEmail.Text = ClienteElegido.Email
-            TxtCantidadHijos.Value = ClienteElegido.CantidadHijos
-            TxtSalario.Value = ClienteElegido.Salario
+			ClienteElegido = Cliente.RecuperarUnCliente(Id_Clientes)
 
-            If ClienteElegido.Genero = 0 Then
-                RdbMasculino.Checked = True
-            Else
-                RdbFemenino.Checked = True
-            End If
+			TxtCodigo.Text = ClienteElegido.Id_Clientes
+			TxtNombre.Text = ClienteElegido.Nombre
+			TxtDireccion.Text = ClienteElegido.Direccion
+			TxtTelefono.Text = ClienteElegido.Telefono
+			TxtCedula.Text = ClienteElegido.Cedula
+			TxtRuc.Text = ClienteElegido.Ruc
+			DtpNacimiento.Value = ClienteElegido.Nacimiento
+			TxtEmail.Text = ClienteElegido.Email
+			TxtCantidadHijos.Value = ClienteElegido.CantidadHijos
+			TxtSalario.Value = ClienteElegido.Salario
 
-            PctFoto.Image = ClienteElegido.Foto
+			If ClienteElegido.Genero = 0 Then
+				RdbMasculino.Checked = True
+			Else
+				RdbFemenino.Checked = True
+			End If
 
-        End If
-    End Sub
+			PctFoto.Image = ClienteElegido.Foto
 
-    Private Sub BtnEliminar_Click(sender As Object, e As EventArgs) Handles BtnEliminar.Click
+		End If
+	End Sub
 
-        If MessageBox.Show("Quiere eliminar el registro?", "Eliminar", MessageBoxButtons.YesNo) = DialogResult.Yes Then
-            Dim NuevoCliente As New Cliente
-            NuevoCliente.Id_Clientes = TxtCodigo.Text
-            Cliente.EliminarCliente(NuevoCliente)
+	Private Sub BtnEliminar_Click(sender As Object, e As EventArgs) Handles BtnEliminar.Click
+		If MessageBox.Show("Quiere eliminar el registro?", "Eliminar", MessageBoxButtons.YesNo) = DialogResult.Yes Then
+			Dim NuevoCliente As New Cliente
+			NuevoCliente.Id_Clientes = TxtCodigo.Text
+			Cliente.EliminarClientes(NuevoCliente)
 
-            Limpiar()
-            GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
+			BtnNuevo_Click(Nothing, Nothing)
+			GrdClientes.DataSource = Cliente.RecuperarTodosLosClientes
 
-            MessageBox.Show("Operacion realizada", "Stock", MessageBoxButtons.OK)
-        End If
-    End Sub
+			MessageBox.Show("Operacion realizada")
+		End If
 
-    Private Sub BtnBuscarPorNombre_Click(sender As Object, e As EventArgs) Handles BtnBuscarPorNombre.Click
-        Try
-            GrdClientes.DataSource = Cliente.RecuperarTodosLosClientesPorNombre(TxtNombre.Text)
-
-        Catch ex As Exception
-            MessageBox.Show("Ocurrio este error = " & ex.Message)
-        End Try
-    End Sub
-
-    Private Sub BtnBuscarPorCedula_Click(sender As Object, e As EventArgs) Handles BtnBuscarPorCedula.Click
-        Try
-            GrdClientes.DataSource = Cliente.RecuperarTodosLosClientesPorCedula(TxtCedula.Text)
-
-        Catch ex As Exception
-            MessageBox.Show("Ocurrio este error = " & ex.Message)
-        End Try
-    End Sub
-
-#End Region
-
+	End Sub
 End Class
